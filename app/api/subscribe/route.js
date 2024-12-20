@@ -1,5 +1,6 @@
 import crypto from 'crypto';
 import { mailchimpClient } from '@/utils/mailchimp';
+import Bottleneck from 'bottleneck';
 
 // Bottleneck limiter configuration
 const limiter = new Bottleneck({
@@ -11,48 +12,24 @@ const listID = process.env.MAILCHIMP_LIST_ID;
 //adding the subscriber
 const addSubscriber = async (email, name) => {
   return limiter.schedule(() => mailchimpClient.lists.addListMember(listID, {
-    email_address: subscribingUser.email,
+    email_address: email,
     status: "pending",
     merge_fields: {
-      FNAME: subscribingUser.name
+      FNAME: name
       }
     })
   );
 }
 
-
 export async function POST(request) {
-  const result = await request.json();
-  console.log("recieved data ", result);
-  
-  const name = result.name;
-  const email = result.email;
-  const subscribingUser = {
-    name: name,
-    email: email
-  };
-
   try {
-    
 
-    return new Response(
-      JSON.stringify({ message: 'Data received successfully!', data: result }),
-      {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({useremail: subscribingUser.email})
-      }
-    );
+    const { email, name } = await request.json();
+    await addSubscriber(email, name);
+
+    return new Response(JSON.stringify({ message: 'Pending subscription added'}),{status: 200});
     } catch (error) {
-      console.error('Error handling POST request', error['response']);
-
-      return new Response(JSON.stringify({ error: 'Failed to process request' }),
-      {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' },
-      }
-    );
+      return new Response(JSON.stringify({ error: 'Failed to process request' }),{status: 500});
     }
-  
 }
 

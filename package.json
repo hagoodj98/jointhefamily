@@ -16,6 +16,7 @@
     "@mui/material": "^6.2.1",
     "bootstrap": "^5.3.3",
     "bottleneck": "^2.19.5",
+    "ioredis": "^5.4.2",
     "next": "15.1.1",
     "react": "^19.0.0",
     "react-bootstrap": "^2.10.7",

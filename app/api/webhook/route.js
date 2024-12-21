@@ -1,7 +1,9 @@
 
 
 export async function POST(req) {
+
     try{
+      
          // Detect and handle different content types
         const contentType = req.headers.get('content-type');
 
@@ -14,16 +16,26 @@ export async function POST(req) {
             const text = await req.text();
             const params = new URLSearchParams(text);
             body = Object.fromEntries(params.entries());
+
+            // Normalize the data object for consistency
+            body.data = {
+            email: body['data[email]'],
+            email_type: body['data[email_type]'],
+            status: body['data[status]'],
+            };
           } else {
-            throw new Error('Unsupported content type');
+            throw new Error(`Unsupported content type: ${contentType}`);
           }
         // Log the full payload for debugging
         console.log('Webhook received:', body);
 
         // Extract specific data for your use case
-    if (body.type === 'subscribe') {
-        console.log(`User confirmed subscription: ${body.data?.email}`);
-      }
+        if (!body.data?.email) {
+          throw new Error('Missing required field: email');
+        }
+        if (body.type === 'subscribe') {
+            console.log(`User confirmed subscription: ${body.data?.email}`);
+          }
       return new Response('Webhook received', { status: 200 }); //Respond to Mailchimp
     }catch (error){
         console.error('Error handling webhook:', error);
@@ -31,15 +43,13 @@ export async function POST(req) {
     }
     
 }
-export function GET() {
-    // Respond to GET requests (used for Mailchimp verification)
-    return new Response('Webhook endpoint is live', { status: 200 });
-  }
 /*
-// Handle unsupported methods
+export async function GET() {
+  return new Response('GET method not supported for this route', { status: 405 });
+}
+  */
+
 export function GET() {
-    return new Response('Method Not Allowed', {
-      status: 405,
-      headers: { Allow: 'POST' },
-    });
-  }*/
+  return new Response('Webhook endpoint is live', { status: 200 });
+}
+  
